@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="js/jquery.js"></script>
+    <script src="js/d3.min.js"></script>
+  </head>
+
+  <body>
+    <script>
+      $(document).ready(function () {
+        var JSONData = $.getJSON(
+          "https://raw.githubusercontent.com/bumbeishvili/Assets/master/Projects/D3/Organization%20Chart/redesignedChartLongData.json",
+          function (data) {
+            // var items = data;
+            // const replacer = (key, value) => (value === null ? "" : value); // specify how you want to handle null values here
+            // const header = Object.keys(items[0]);
+            // let csv = items.map((row) =>
+            //   header
+            //     .map((fieldName) => JSON.stringify(row[fieldName], replacer))
+            //     .join(",")
+            // );
+            // csv.unshift(header.join(","));
+            // csv = csv.join("\r\n");
+            data = numberNodes(data)[0];
+            console.log(data);
+            var csv = HierarchyToCSV(data);
+
+            //Download the file as CSV
+            var downloadLink = document.createElement("a");
+            var blob = new Blob(["\ufeff", csv]);
+            var url = URL.createObjectURL(blob);
+            downloadLink.href = url;
+            downloadLink.download = "org_chart.csv"; //Name the file here
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+          }
+        );
+      });
+
+      function numberNodes(tree, n = 1) {
+        return (function recurse(children) {
+          if (Array.isArray(children)) {
+            return children.map((node) =>
+              Object.assign({}, node, {
+                id: n++,
+                children: recurse(node.children),
+              })
+            );
+          }
+        })([tree]);
+      }
+
+      function pushNodes(node, titles, lines, parent_id = "") {
+        var line = "";
+        var id = "";
+        for (var j = 0; j < titles.length; j++) {
+          let keyfound = 0;
+          Object.entries(node).forEach(([key, value]) => {
+            if (key == titles[j]) {
+              line += ',"' + (key == "unit" ? value.value : value) + '"';
+              if (key == "id") {
+                id = value;
+              }
+              keyfound = 1;
+              return false;
+            }
+          });
+          if (keyfound == 0) {
+            line += ',"' + '"';
+          }
+        }
+        line += ',"' + parent_id + '"';
+        lines.push(line.slice(1));
+        if (Array.isArray(node.children)) {
+          node.children.forEach((v) => pushNodes(v, titles, lines, id));
+        }
+      }
+
+      function HierarchyToCSV(obj) {
+        var root = obj; //typeof obj != "object" ? JSON.parse(obj) : obj;
+
+        var str = "";
+        var titles = [];
+        var seqid = 1;
+        var lines = [];
+        Object.entries(root).forEach(([key, value]) => {
+          //console.log('key=', key, "   val=", value );
+          if (titles.includes(key) || key == "children") {
+            // console.log (key , 'exists');
+          } else {
+            titles.push(key);
+          }
+        });
+        let htext = '"' + titles.join('","') + '","parent_id"';
+        console.log("header:", htext);
+        // add to str
+        str += htext + "\r\n";
+
+        pushNodes(root, titles, lines);
+        console.log(lines);
+        str += lines.join("\r\n");
+        return str;
+      }
+    </script>
+  </body>
+</html>

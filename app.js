@@ -18,11 +18,11 @@
   var targetWorksheet;
   var parameterSelect;
   var targetFilter;
-  // "https://10ax.online.tableau.com/img/user_content_type.svg"
 
   $(document).ready(function () {
     tableau.extensions.initializeAsync({ configure: configure }).then(
       function () {
+        console.log(window.location);
         getSettings();
         renderGraph();
         // unregisterSettingsEventListener =

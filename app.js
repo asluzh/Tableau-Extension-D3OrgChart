@@ -87,7 +87,7 @@
   }
 
   function configure() {
-    let popupUrl = window.location.origin + "/configure.html";
+    let popupUrl = window.location.origin + "./configure.html";
     // console.log(popupUrl);
     tableau.extensions.ui
       .displayDialogAsync(popupUrl, "Payload Message", {

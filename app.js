@@ -11,6 +11,17 @@
   var savedFieldPicture;
   var savedFieldLocation1;
   var savedFieldLocation2;
+  var savedMeasure1;
+  var savedMeasure1Color;
+  var savedMeasure1Symbol;
+  var savedMeasure2;
+  var savedMeasure2Color;
+  var savedMeasure2Symbol;
+  var savedMeasure3;
+  var savedMeasure3Color;
+  var savedMeasure3Symbol;
+  var savedMeasureAggrLevels;
+  var savedMaxLevel;
   var savedDefaultPicture;
   var savedTargetSheet;
   var savedTargetFilter;
@@ -22,7 +33,7 @@
   $(document).ready(function () {
     tableau.extensions.initializeAsync({ configure: configure }).then(
       function () {
-        console.log(window.location);
+        // console.log(window.location);
         getSettings();
         renderGraph();
         // unregisterSettingsEventListener =
@@ -51,6 +62,19 @@
     savedFieldPicture = tableau.extensions.settings.get("field_picture");
     savedFieldLocation1 = tableau.extensions.settings.get("field_location1");
     savedFieldLocation2 = tableau.extensions.settings.get("field_location2");
+    savedMeasure1 = tableau.extensions.settings.get("attr_measure1");
+    savedMeasure1Color = tableau.extensions.settings.get("measure1_color");
+    console.log(savedMeasure1Color);
+    savedMeasure1Symbol = tableau.extensions.settings.get("measure1_symbol");
+    console.log(savedMeasure1Symbol);
+    savedMeasure2 = tableau.extensions.settings.get("attr_measure2");
+    savedMeasure2Color = tableau.extensions.settings.get("measure2_color");
+    savedMeasure2Symbol = tableau.extensions.settings.get("measure2_symbol");
+    savedMeasure3 = tableau.extensions.settings.get("attr_measure3");
+    savedMeasure3Color = tableau.extensions.settings.get("measure3_color");
+    savedMeasure3Symbol = tableau.extensions.settings.get("measure3_symbol");
+    savedMeasureAggrLevels = tableau.extensions.settings.get("measure_aggr_levels");
+    savedMaxLevel = tableau.extensions.settings.get("max_level");
     savedDefaultPicture = tableau.extensions.settings.get("default_picture");
     savedPictureUrlTemplate = tableau.extensions.settings.get("picture_url_template");
     savedTargetSheet = tableau.extensions.settings.get("target_sheet");
@@ -159,8 +183,26 @@
       }
     });
     // console.log(hashTable);
+    function calcTreeSize(t) {
+      var size = 1;
+      if (t.children) {
+        t.children.forEach(function (d) {
+          size += calcTreeSize(d);
+        });
+      }
+      return size;
+    }
     if (treeData.length > 0) {
-      return treeData[0];
+      var maxTreeSize = 0;
+      var i, max_i;
+      for (i = 0; i < treeData.length; i++) {
+        var treeSize = calcTreeSize(treeData[i]);
+        if (treeSize > maxTreeSize) {
+          maxTreeSize = treeSize;
+          max_i = i;
+        }
+      }
+      return treeData[max_i];
     }
   }
 
@@ -232,10 +274,20 @@
         dynamic.nodeImageHeight = attrs.nodeHeight - 2 * attrs.nodePadding;
         dynamic.nodeTextLeftMargin = attrs.nodePadding * 2 + dynamic.nodeImageWidth;
         dynamic.rootNodeLeftMargin = attrs.width / 2;
-        dynamic.nodePositionNameTopMargin =
-          attrs.nodePadding + 8 + (dynamic.nodeImageHeight / 4) * 1;
-        dynamic.nodeChildCountTopMargin =
-          attrs.nodePadding + 14 + (dynamic.nodeImageHeight / 4) * 3;
+        // dynamic.nodePositionNameTopMargin =
+        //   attrs.nodePadding + 8 + (dynamic.nodeImageHeight / 4) * 1;
+        dynamic.nodeChildCountTopMargin = dynamic.nodeImageHeight;
+        dynamic.nodeMeasuresLeftMargin = attrs.nodePadding * 2 + dynamic.nodeImageWidth + 60;
+        if (savedMeasure3) {
+          dynamic.nodeMeasures1TopMargin = dynamic.nodeChildCountTopMargin - 24;
+          dynamic.nodeMeasures2TopMargin = dynamic.nodeChildCountTopMargin - 8;
+          dynamic.nodeMeasures3TopMargin = dynamic.nodeChildCountTopMargin + 8;
+        } else if (savedMeasure2) {
+          dynamic.nodeMeasures1TopMargin = dynamic.nodeChildCountTopMargin - 16;
+          dynamic.nodeMeasures2TopMargin = dynamic.nodeChildCountTopMargin;
+        } else {
+          dynamic.nodeMeasures1TopMargin = dynamic.nodeChildCountTopMargin;
+        }
 
         var tree = d3.layout.tree().nodeSize([attrs.nodeWidth + 40, attrs.nodeHeight]);
         var diagonal = d3.svg.diagonal().projection(function (d) {
@@ -275,6 +327,73 @@
             },
             attrs.root
           );
+        }
+
+        function calcMeasure1AggrRecursive(v) {
+          var val = v.calcMeasure1;
+          if (v.children && savedMeasureAggrLevels > 0)
+            v.children.forEach(function (d) {
+              val += calcMeasure1AggrRecursive(d);
+            });
+          if (v._children && savedMeasureAggrLevels > 0)
+            v._children.forEach(function (d) {
+              val += calcMeasure1AggrRecursive(d);
+            });
+          return val;
+        }
+        function calcMeasure2AggrRecursive(v) {
+          var val = v.calcMeasure2;
+          if (v.children && savedMeasureAggrLevels > 0)
+            v.children.forEach(function (d) {
+              val += calcMeasure2AggrRecursive(d);
+            });
+          if (v._children && savedMeasureAggrLevels > 0)
+            v._children.forEach(function (d) {
+              val += calcMeasure2AggrRecursive(d);
+            });
+          return val;
+        }
+        function calcMeasure3AggrRecursive(v) {
+          var val = v.calcMeasure3;
+          if (v.children && savedMeasureAggrLevels > 0)
+            v.children.forEach(function (d) {
+              val += calcMeasure3AggrRecursive(d);
+            });
+          if (v._children && savedMeasureAggrLevels > 0)
+            v._children.forEach(function (d) {
+              val += calcMeasure3AggrRecursive(d);
+            });
+          return val;
+        }
+        if (savedMeasure1) {
+          addPropertyRecursive(
+            "calcMeasure1",
+            function (d) {
+              return d[savedMeasure1] == "%null%" ? 0 : d[savedMeasure1];
+            },
+            attrs.root
+          );
+          addPropertyRecursive("calcMeasure1Aggr", calcMeasure1AggrRecursive, attrs.root);
+        }
+        if (savedMeasure2) {
+          addPropertyRecursive(
+            "calcMeasure2",
+            function (d) {
+              return d[savedMeasure2] == "%null%" ? 0 : d[savedMeasure2];
+            },
+            attrs.root
+          );
+          addPropertyRecursive("calcMeasure2Aggr", calcMeasure2AggrRecursive, attrs.root);
+        }
+        if (savedMeasure3) {
+          addPropertyRecursive(
+            "calcMeasure3",
+            function (d) {
+              return d[savedMeasure3] == "%null%" ? 0 : d[savedMeasure3];
+            },
+            attrs.root
+          );
+          addPropertyRecursive("calcMeasure3Aggr", calcMeasure3AggrRecursive, attrs.root);
         }
 
         expand(attrs.root);
@@ -386,29 +505,29 @@
             })
             .call(wrap, attrs.nodeWidth);
 
-          nodeGroup
-            .append("text")
-            .attr("x", dynamic.nodeTextLeftMargin)
-            .attr("y", dynamic.nodePositionNameTopMargin)
-            .attr("class", "emp-position")
-            .attr("dy", ".35em")
-            .attr("text-anchor", "left")
-            .text(function (d) {
-              if (savedFieldPosition) {
-                var position = d[savedFieldPosition].substring(0, 27);
-                if (position.length < d[savedFieldPosition].length) {
-                  position = position.substring(0, 24) + "...";
-                }
-                return position;
-              } else {
-                return "";
-              }
-            });
+          // nodeGroup
+          //   .append("text")
+          //   .attr("x", dynamic.nodeTextLeftMargin)
+          //   .attr("y", dynamic.nodePositionNameTopMargin)
+          //   .attr("class", "emp-position")
+          //   .attr("dy", ".35em")
+          //   .attr("text-anchor", "left")
+          //   .text(function (d) {
+          //     if (savedFieldPosition) {
+          //       var position = d[savedFieldPosition].substring(0, 27);
+          //       if (position.length < d[savedFieldPosition].length) {
+          //         position = position.substring(0, 24) + "...";
+          //       }
+          //       return position;
+          //     } else {
+          //       return "";
+          //     }
+          //   });
 
           nodeGroup
             .append("text")
             .attr("x", dynamic.nodeTextLeftMargin)
-            .attr("y", attrs.nodePadding + 10 + (dynamic.nodeImageHeight / 4) * 2)
+            .attr("y", 30)
             .attr("class", "emp-unit")
             .attr("dy", ".35em")
             .attr("text-anchor", "left")
@@ -434,12 +553,86 @@
             .attr("y", dynamic.nodeChildCountTopMargin)
             .attr("class", "emp-count")
             .attr("text-anchor", "left")
-
             .text(function (d) {
               if (d.children) return d.children.length;
               if (d._children) return d._children.length;
               return;
             });
+
+          if (savedMeasure1) {
+            nodeGroup
+              .append("text")
+              .attr("x", dynamic.nodeMeasuresLeftMargin)
+              .attr("y", dynamic.nodeMeasures1TopMargin)
+              .attr("class", "emp-measure-icon")
+              .attr("text-anchor", "left")
+              .style("font-family", "FontAwesome")
+              .style("fill", savedMeasure1Color)
+              .text(function (d) {
+                return String.fromCharCode(parseInt(savedMeasure1Symbol, 16));
+              });
+
+            nodeGroup
+              .append("text")
+              .attr("x", dynamic.nodeMeasuresLeftMargin + 15)
+              .attr("y", dynamic.nodeMeasures1TopMargin)
+              .attr("class", "emp-measure")
+              .attr("text-anchor", "left")
+              .style("fill", savedMeasure1Color)
+              .text(function (d) {
+                return d.calcMeasure1Aggr;
+              });
+          }
+
+          if (savedMeasure2) {
+            nodeGroup
+              .append("text")
+              .attr("x", dynamic.nodeMeasuresLeftMargin)
+              .attr("y", dynamic.nodeMeasures2TopMargin)
+              .attr("class", "emp-measure-icon")
+              .attr("text-anchor", "left")
+              .style("font-family", "FontAwesome")
+              .style("fill", savedMeasure2Color)
+              .text(function (d) {
+                return String.fromCharCode(parseInt(savedMeasure2Symbol, 16));
+              });
+
+            nodeGroup
+              .append("text")
+              .attr("x", dynamic.nodeMeasuresLeftMargin + 15)
+              .attr("y", dynamic.nodeMeasures2TopMargin)
+              .attr("class", "emp-measure")
+              .attr("text-anchor", "left")
+              .style("fill", savedMeasure2Color)
+              .text(function (d) {
+                return d.calcMeasure2Aggr;
+              });
+          }
+
+          if (savedMeasure3) {
+            nodeGroup
+              .append("text")
+              .attr("x", dynamic.nodeMeasuresLeftMargin)
+              .attr("y", dynamic.nodeMeasures3TopMargin)
+              .attr("class", "emp-measure-icon")
+              .attr("text-anchor", "left")
+              .style("font-family", "FontAwesome")
+              .style("fill", savedMeasure3Color)
+              .text(function (d) {
+                return String.fromCharCode(parseInt(savedMeasure3Symbol, 16));
+              });
+
+            nodeGroup
+              .append("text")
+              .attr("x", dynamic.nodeMeasuresLeftMargin + 15)
+              .attr("y", dynamic.nodeMeasures3TopMargin)
+              .attr("class", "emp-measure")
+              .attr("text-anchor", "left")
+              .style("fill", savedMeasure3Color)
+              .text(function (d) {
+                return d.calcMeasure3Aggr;
+              });
+          }
 
           nodeGroup
             .append("defs")
@@ -472,6 +665,7 @@
               return savedDefaultPicture;
             })
             .on("error", function () {
+              // console.log("error loading svg image");
               d3.select(this).attr("xlink:href", function (d) {
                 return savedDefaultPicture;
               });
@@ -679,21 +873,9 @@
             return strVar;
           }
 
-          function errorLoadingPicture() {
-            console.log("error occur");
-          }
-
           function tooltipHoverHandler(d) {
-            // console.log(d);
             var content = tooltipContent(d);
             tooltip.html(content);
-            // tooltip.select(".profile-image-wrapper").attr("onerror", "errorLoadingPicture()");
-            // function () {
-            // d3.select(this).attr("xlink:href", function (d) {
-            //   return savedDefaultPicture;
-            // });
-            // });
-            // console.log(tooltip.select(".profile-image-wrapper"));
 
             tooltip.transition().duration(200).style("opacity", "1").style("display", "block");
             d3.select(this).attr("cursor", "pointer").attr("stroke-width", 50);
@@ -765,6 +947,11 @@
 
         // Toggle children on click.
         function click(d) {
+          // console.log(d);
+          if (d._children && d.depth >= savedMaxLevel && savedMaxLevel > 0) {
+            console.log("expanding node not allowed");
+            return; // don't allow to expand if at the max level
+          }
           d3.select(this)
             .select("text")
             .text(function (dv) {
@@ -1042,7 +1229,7 @@
           }
 
           if (d.children) {
-            // if node has children and it's expanded, then  display -
+            // if node has children and it's expanded, then display -
             setToggleSymbol(d, attrs.COLLAPSE_SYMBOL);
           }
         }

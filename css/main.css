@@ -35,7 +35,7 @@
 }
 
 .customTooltip-wrapper {
-  font-family: "Roboto", sans-serif;
+  font-family: Arial, sans-serif;
   opacity: 0;
   /* NEW */
   display: none;
@@ -335,5 +335,10 @@ text {
 .node-group .emp-count,
 .node-group .emp-count-icon {
   fill: #91a4a5;
+  font-size: 12px;
+}
+
+.node-group .emp-measure,
+.node-group .emp-measure-icon {
   font-size: 12px;
 }

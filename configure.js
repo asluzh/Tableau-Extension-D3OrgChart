@@ -49,6 +49,9 @@ function updateSourceSheetSelection() {
     $("#selectFieldPicture").html('<option selected="selected"></option>');
     $("#selectFieldLocation1").html('<option selected="selected"></option>');
     $("#selectFieldLocation2").html('<option selected="selected"></option>');
+    $("#selectAttrMeasure1").html('<option selected="selected"></option>');
+    $("#selectAttrMeasure2").html('<option selected="selected"></option>');
+    $("#selectAttrMeasure3").html('<option selected="selected"></option>');
     worksheetColumns.forEach(function (current_value) {
       $("#selectFieldNodeId").append(
         "<option value='" + current_value.fieldName + "'>" + current_value.fieldName + "</option>"
@@ -72,6 +75,15 @@ function updateSourceSheetSelection() {
         "<option value='" + current_value.fieldName + "'>" + current_value.fieldName + "</option>"
       );
       $("#selectFieldLocation2").append(
+        "<option value='" + current_value.fieldName + "'>" + current_value.fieldName + "</option>"
+      );
+      $("#selectAttrMeasure1").append(
+        "<option value='" + current_value.fieldName + "'>" + current_value.fieldName + "</option>"
+      );
+      $("#selectAttrMeasure2").append(
+        "<option value='" + current_value.fieldName + "'>" + current_value.fieldName + "</option>"
+      );
+      $("#selectAttrMeasure3").append(
         "<option value='" + current_value.fieldName + "'>" + current_value.fieldName + "</option>"
       );
     });
@@ -114,6 +126,50 @@ function updateSourceSheetSelection() {
     sel_value = tableau.extensions.settings.get("picture_url_template");
     if (sel_value != undefined) {
       $("#inputPictureUrlTemplate").val(sel_value);
+    }
+    sel_value = tableau.extensions.settings.get("max_level");
+    if (sel_value != undefined) {
+      $("#selectMaxLevel").val(sel_value);
+    }
+    sel_value = tableau.extensions.settings.get("attr_measure1");
+    if (sel_value != undefined) {
+      $("#selectAttrMeasure1").val(sel_value);
+    }
+    sel_value = tableau.extensions.settings.get("measure1_color");
+    if (sel_value != undefined) {
+      $("#inputMeasure1Color").val(sel_value);
+    }
+    sel_value = tableau.extensions.settings.get("measure1_symbol");
+    if (sel_value != undefined) {
+      $("#inputMeasure1Symbol").val(sel_value);
+    }
+    sel_value = tableau.extensions.settings.get("attr_measure2");
+    if (sel_value != undefined) {
+      $("#selectAttrMeasure2").val(sel_value);
+    }
+    sel_value = tableau.extensions.settings.get("measure2_color");
+    if (sel_value != undefined) {
+      $("#inputMeasure2Color").val(sel_value);
+    }
+    sel_value = tableau.extensions.settings.get("measure2_symbol");
+    if (sel_value != undefined) {
+      $("#inputMeasure2Symbol").val(sel_value);
+    }
+    sel_value = tableau.extensions.settings.get("attr_measure3");
+    if (sel_value != undefined) {
+      $("#selectAttrMeasure3").val(sel_value);
+    }
+    sel_value = tableau.extensions.settings.get("measure3_color");
+    if (sel_value != undefined) {
+      $("#inputMeasure3Color").val(sel_value);
+    }
+    sel_value = tableau.extensions.settings.get("measure3_symbol");
+    if (sel_value != undefined) {
+      $("#inputMeasure3Symbol").val(sel_value);
+    }
+    sel_value = tableau.extensions.settings.get("measure_aggr_levels");
+    if (sel_value != undefined) {
+      $("#inputMeasureAggrLevels").val(sel_value);
     }
   });
 }
@@ -165,6 +221,17 @@ function saveButton() {
   tableau.extensions.settings.set("field_location2", $("#selectFieldLocation2").val());
   tableau.extensions.settings.set("default_picture", $("#inputDefaultPicture").val());
   tableau.extensions.settings.set("picture_url_template", $("#inputPictureUrlTemplate").val());
+  tableau.extensions.settings.set("max_level", $("#selectMaxLevel").val());
+  tableau.extensions.settings.set("attr_measure1", $("#selectAttrMeasure1").val());
+  tableau.extensions.settings.set("measure1_color", $("#inputMeasure1Color").val());
+  tableau.extensions.settings.set("measure1_symbol", $("#inputMeasure1Symbol").val());
+  tableau.extensions.settings.set("attr_measure2", $("#selectAttrMeasure2").val());
+  tableau.extensions.settings.set("measure2_color", $("#inputMeasure2Color").val());
+  tableau.extensions.settings.set("measure2_symbol", $("#inputMeasure2Symbol").val());
+  tableau.extensions.settings.set("attr_measure3", $("#selectAttrMeasure3").val());
+  tableau.extensions.settings.set("measure3_color", $("#inputMeasure3Color").val());
+  tableau.extensions.settings.set("measure3_symbol", $("#inputMeasure3Symbol").val());
+  tableau.extensions.settings.set("measure_aggr_levels", $("#inputMeasureAggrLevels").val());
   tableau.extensions.settings.set("target_sheet", $("#selectTargetWorksheet").val());
   tableau.extensions.settings.set("target_filter", $("#selectTargetFilter").val());
   tableau.extensions.settings.saveAsync().then((currentSettings) => {

@@ -64,9 +64,7 @@
     savedFieldLocation2 = tableau.extensions.settings.get("field_location2");
     savedMeasure1 = tableau.extensions.settings.get("attr_measure1");
     savedMeasure1Color = tableau.extensions.settings.get("measure1_color");
-    console.log(savedMeasure1Color);
     savedMeasure1Symbol = tableau.extensions.settings.get("measure1_symbol");
-    console.log(savedMeasure1Symbol);
     savedMeasure2 = tableau.extensions.settings.get("attr_measure2");
     savedMeasure2Color = tableau.extensions.settings.get("measure2_color");
     savedMeasure2Symbol = tableau.extensions.settings.get("measure2_symbol");
@@ -101,13 +99,13 @@
         });
       });
     }
-    // unregisterFilterEventListener = inputWsEdges.addEventListener(
-    //   tableau.TableauEventType.FilterChanged,
-    //   function () {
-    //     console.log("FilterChanged");
-    //     renderGraph();
-    //   }
-    // );
+    unregisterFilterEventListener = worksheet.addEventListener(
+      tableau.TableauEventType.FilterChanged,
+      function () {
+        console.log("FilterChanged");
+        renderGraph();
+      }
+    );
   }
 
   function configure() {
@@ -202,7 +200,7 @@
           max_i = i;
         }
       }
-      return treeData[max_i];
+      return treeData[max_i]; // return the root node of the largest tree
     }
   }
 
@@ -264,7 +262,7 @@
           minMaxZoomProportions: [0.05, 3],
           linkLineSize: 180,
           collapsibleFontSize: "10px",
-          userIcon: "\uf007",
+          userIcon: "\uf0e8", // f007
           nodeStroke: "#ccc",
           nodeStrokeWidth: "1px",
         };
@@ -549,7 +547,7 @@
 
           nodeGroup
             .append("text")
-            .attr("x", dynamic.nodeTextLeftMargin + 13)
+            .attr("x", dynamic.nodeTextLeftMargin + 16)
             .attr("y", dynamic.nodeChildCountTopMargin)
             .attr("class", "emp-count")
             .attr("text-anchor", "left")
@@ -647,6 +645,15 @@
             .attr("fill", "none")
             .attr("height", dynamic.nodeImageHeight - 4);
 
+          function getNodeImage(d) {
+            if (savedFieldPicture) return d[savedFieldPicture];
+            if (savedPictureUrlTemplate) {
+              return savedPictureUrlTemplate.replace(/\{\{(.*?)\}\}/g, function (match, token) {
+                return d[token];
+              });
+            }
+            return savedDefaultPicture;
+          }
           nodeGroup
             .append("svg:image")
             .attr("y", 2 + attrs.nodePadding)
@@ -655,20 +662,22 @@
             .attr("width", dynamic.nodeImageWidth)
             .attr("height", dynamic.nodeImageHeight - 4)
             .attr("clip-path", "url(#clip)")
-            .attr("xlink:href", function (d) {
-              if (savedFieldPicture) return d[savedFieldPicture];
-              if (savedPictureUrlTemplate) {
-                return savedPictureUrlTemplate.replace(/\{\{(.*?)\}\}/g, function (match, token) {
-                  return d[token];
-                });
-              }
-              return savedDefaultPicture;
-            })
-            .on("error", function () {
-              // console.log("error loading svg image");
-              d3.select(this).attr("xlink:href", function (d) {
-                return savedDefaultPicture;
-              });
+            .attr("xlink:href", getNodeImage)
+            // .on("error", function () {
+            //   // this event is not dispatched in Edge, workaround below
+            //   // console.log("error loading svg image");
+            //   d3.select(this).attr("xlink:href", savedDefaultPicture);
+            // });
+            .each(function (d, i) {
+              var testImage = new Image();
+              testImage.addEventListener(
+                "error",
+                function () {
+                  d3.select(this).attr("xlink:href", savedDefaultPicture);
+                }.bind(this)
+              );
+              testImage.id = d.uniqueIdentifier;
+              testImage.src = getNodeImage(d);
             });
 
           // Transition nodes to their new position.
